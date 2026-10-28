@@ -1,0 +1,58 @@
+# =============================================================================
+# /etc/haproxy/haproxy.cfg - FICHIER GENERE AUTOMATIQUEMENT par scripts/lb.sh
+#   Modele  : config/haproxy.cfg.tpl
+#   Source  : config/noeuds.yml (source unique de verite, ecrite par le Vagrantfile)
+# Ne pas modifier a la main : toute modification serait ecrasee au prochain
+# 'vagrant up' ou 'vagrant provision'.
+# =============================================================================
+
+global
+    log /dev/log local0
+    maxconn 4096
+    user haproxy
+    group haproxy
+    daemon
+    # Socket d'administration : permet de retirer un serveur proprement (E4)
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+
+defaults
+    mode http
+    log global
+    option httplog
+    option dontlognull
+    # Delai maximal pour etablir une connexion vers un serveur applicatif
+    timeout connect 2s
+    timeout client 30s
+    timeout server 30s
+    # Delai maximal de reponse a une sonde de sante
+    timeout check 1s
+    # En cas d'echec de connexion : 2 nouvelles tentatives,
+    # sur un AUTRE serveur (redispatch) -> moins de requetes perdues (V2)
+    retries 2
+    option redispatch
+
+# --- Point d'entree : seul port expose vers l'hote (8080 -> 80, R8) ----------
+frontend entree_web
+    bind 0.0.0.0:80
+    default_backend serveurs_app
+
+# --- Serveurs applicatifs -----------------------------------------------------
+backend serveurs_app
+    # Tourniquet : chaque serveur recoit une requete a tour de role (V1)
+    balance roundrobin
+    # Sonde de sante (R4) : GET /sante doit repondre 200, sinon serveur ecarte
+    option httpchk
+    http-check send meth GET uri /sante
+    http-check expect status 200
+    # Sonde toutes les 1 s ; ecarte apres 2 echecs (~2 s < 5 s exiges) ;
+    # reintegre apres 2 succes
+    default-server inter 1s fall 2 rise 2
+    # Liste generee depuis noeuds.yml (aucune adresse en dur) :
+@SERVEURS@
+
+# --- Page de statistiques : http://<ip lb1>:8404/stats (reseau prive) ---------
+listen statistiques
+    bind 0.0.0.0:8404
+    stats enable
+    stats uri /stats
+    stats refresh 2s

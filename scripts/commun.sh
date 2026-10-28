@@ -12,10 +12,13 @@ export DEBIAN_FRONTEND=noninteractive  # apt ne pose aucune question
 echo "[commun] $(hostname) : debut du provisionnement commun"
 
 # --- 1. Paquets de base ------------------------------------------------------
-# On ne refait 'apt-get update' que si le cache a plus d'une heure :
-# economise la connexion lente (contrainte 7.2).
-if [ -z "$(find /var/lib/apt/lists -maxdepth 1 -name '*Packages' -mmin -60 2>/dev/null)" ]; then
+# On ne refait 'apt-get update' que si le dernier a plus d'une heure :
+# economise la connexion lente (contrainte 7.2). Un fichier "temoin"
+# est touche apres chaque mise a jour reussie.
+TEMOIN=/var/lib/apt/.resultats-bf-maj
+if [ ! -f "$TEMOIN" ] || [ -n "$(find "$TEMOIN" -mmin +60)" ]; then
   apt-get update -q
+  touch "$TEMOIN"
 fi
 # python3-yaml : permet aux scripts de lire noeuds.yml
 apt-get install -y -q python3-yaml

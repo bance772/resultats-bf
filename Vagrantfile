@@ -41,7 +41,8 @@ NB_APP = parametre('NB_APP', '2').to_i      # nombre de serveurs applicatifs (R3
 abort "ERREUR : GROUPE doit valoir entre 1 et 8 (recu : #{GROUPE})" unless (1..8).include?(GROUPE)
 abort "ERREUR : NB_APP doit valoir entre 2 et 9 (recu : #{NB_APP})" unless (2..9).include?(NB_APP)
 
-RESEAU  = "192.168.#{55 + GROUPE}"         # plage imposee par VirtualBox (7.1)
+RESEAU  = "192.168.#{55 + GROUPE}"  
+PORT_APP = 8000                             # port d'ecoute des serveurs applicatifs       # plage imposee par VirtualBox (7.1)
 BOITE   = "bento/ubuntu-24.04"
 VERSION = "202510.26.0"                     # version epinglee, identique pour tous
 
@@ -73,7 +74,7 @@ NOEUDS << { "nom" => "lb1", "ip" => "#{RESEAU}.11", "mem" => 512, "role" => "lb"
 # Les scripts lisent ce fichier dans la VM : /vagrant/config/noeuds.yml
 FileUtils.mkdir_p(File.join(__dir__, "config"))
 File.write(File.join(__dir__, "config", "noeuds.yml"),
-           { "reseau" => RESEAU, "noeuds" => NOEUDS }.to_yaml)
+                      { "reseau" => RESEAU, "port_app" => PORT_APP, "noeuds" => NOEUDS }.to_yaml)
 
 # ---------------------------------------------------------------------------
 # 4. Description des machines virtuelles
@@ -102,10 +103,14 @@ Vagrant.configure("2") do |config|
         vb.linked_clone = true    # clone lie : creation rapide, peu d'espace disque
       end
 
-      # Provisionnement : d'abord le commun, puis le script du role
+           # Provisionnement : d'abord le commun, puis le script du role.
+      # Le repartiteur est reprovisionne a CHAQUE 'vagrant up' (run: "always") :
+      # sa configuration suit donc automatiquement NB_APP (R3).
+      # Possible sans risque car lb.sh est idempotent (R2).
       m.vm.provision "commun", type: "shell", path: "scripts/commun.sh"
       m.vm.provision n["role"], type: "shell", path: "scripts/#{n['role']}.sh",
-                     env: (n["role"] == "lb" ? {} : SECRETS)
+                     env: (n["role"] == "lb" ? {} : SECRETS),
+                     run: (n["role"] == "lb" ? "always" : "once")
     end
   end
 end

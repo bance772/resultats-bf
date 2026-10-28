@@ -1,0 +1,117 @@
+
+==========================================================================
+Preuves R2 (idempotence) et R3 (scalabilite) - repartiteur lb1
+Date : 28/10/2026 - Poste : BANCE F.X. (i5-4300U, 8 Go, Windows)
+==========================================================================
+
+Commandes executees :
+  1. vagrant provision lb1                       -> application de la config
+  2. curl.exe -i http://localhost:8080           -> 503 attendu (aucun serveur sain)
+  3. vagrant provision lb1                       -> rejeu sans changement (R2)
+  4. $env:NB_APP=4; vagrant provision lb1        -> passage a 4 serveurs (R3)
+  5. vagrant ssh lb1 -c "grep server ..."        -> verification du fichier genere
+  6. vagrant provision lb1                       -> retour a 2 serveurs
+  
+Commentaire :
+  - Rejeu 1 : "configuration inchangee : rien a faire" -> le script est
+    idempotent, HAProxy n'est pas recharge inutilement (R2).
+  - NB_APP=4 : 4 lignes "server" generees depuis noeuds.yml, sans aucune
+    modification manuelle de la configuration (R3).
+  - Le retour a NB_APP=2 retire app3 et app4 : la configuration suit
+    toujours la source unique de verite.
+  - curl renvoie 503 "No server is available" : les serveurs applicatifs
+    n'existent pas encore, la sonde /sante les declare morts et HAProxy
+    refuse de leur envoyer du trafic. La sonde est donc reellement
+    appliquee (R4, piege n°6).
+
+--------------------------------------------------------------------------
+Sortie brute :
+--------------------------------------------------------------------------
+
+
+PS C:\Users\franc\projets\resultats-bf> vagrant provision lb1
+==> lb1: Running provisioner: commun (shell)...
+    lb1: Running: C:/Users/franc/AppData/Local/Temp/vagrant-shell20261028-17788-ip46o6.sh
+    lb1: [commun] lb1 : debut du provisionnement commun
+    lb1: Reading package lists...
+    lb1: Building dependency tree...
+    lb1: Reading state information...
+    lb1: python3-yaml is already the newest version (6.0.1-2build2).
+    lb1: 0 upgraded, 0 newly installed, 0 to remove and 246 not upgraded.
+    lb1: [commun] lb1 : termine
+==> lb1: Running provisioner: lb (shell)...
+    lb1: Running: C:/Users/franc/AppData/Local/Temp/vagrant-shell20261028-17788-h458bz.sh
+    lb1: [lb] lb1 : debut
+    lb1: [lb] 2 serveur(s) applicatif(s) : app1, app2
+    lb1: Configuration file is valid
+    lb1: [lb] nouvelle configuration appliquee
+    lb1: [lb] lb1 : termine
+PS C:\Users\franc\projets\resultats-bf> curl.exe -i http://localhost:8080
+HTTP/1.1 503 Service Unavailable
+content-length: 107
+cache-control: no-cache
+content-type: text/html
+
+<html><body><h1>503 Service Unavailable</h1>
+No server is available to handle this request.
+</body></html>
+PS C:\Users\franc\projets\resultats-bf> vagrant provision lb1
+==> lb1: Running provisioner: commun (shell)...
+    lb1: Running: C:/Users/franc/AppData/Local/Temp/vagrant-shell20261028-12484-9mcfk.sh
+    lb1: [commun] lb1 : debut du provisionnement commun
+    lb1: Reading package lists...
+    lb1: Building dependency tree...
+    lb1: Reading state information...
+    lb1: python3-yaml is already the newest version (6.0.1-2build2).
+    lb1: 0 upgraded, 0 newly installed, 0 to remove and 246 not upgraded.
+    lb1: [commun] lb1 : termine
+==> lb1: Running provisioner: lb (shell)...
+    lb1: Running: C:/Users/franc/AppData/Local/Temp/vagrant-shell20261028-12484-9qksld.sh
+    lb1: [lb] lb1 : debut
+    lb1: [lb] 2 serveur(s) applicatif(s) : app1, app2
+    lb1: Configuration file is valid
+    lb1: [lb] configuration inchangee : rien a faire
+    lb1: [lb] lb1 : termine
+PS C:\Users\franc\projets\resultats-bf> $env:NB_APP=4; vagrant provision lb1; Remove-Item Env:NB_APP
+==> lb1: Running provisioner: commun (shell)...
+    lb1: Running: C:/Users/franc/AppData/Local/Temp/vagrant-shell20261028-12388-8ixn3k.sh
+    lb1: [commun] lb1 : debut du provisionnement commun
+    lb1: Reading package lists...
+    lb1: Building dependency tree...
+    lb1: Reading state information...
+    lb1: python3-yaml is already the newest version (6.0.1-2build2).
+    lb1: 0 upgraded, 0 newly installed, 0 to remove and 246 not upgraded.
+    lb1: [commun] lb1 : termine
+==> lb1: Running provisioner: lb (shell)...
+    lb1: Running: C:/Users/franc/AppData/Local/Temp/vagrant-shell20261028-12388-bh8vvx.sh
+    lb1: [lb] lb1 : debut
+    lb1: [lb] 4 serveur(s) applicatif(s) : app1, app2, app3, app4
+    lb1: Configuration file is valid
+    lb1: [lb] nouvelle configuration appliquee
+    lb1: [lb] lb1 : termine
+PS C:\Users\franc\projets\resultats-bf> vagrant ssh lb1 -c "grep server /etc/haproxy/haproxy.cfg"
+    timeout server 30s
+    default-server inter 1s fall 2 rise 2
+    server app1 192.168.62.21:8000 check
+    server app2 192.168.62.22:8000 check
+    server app3 192.168.62.23:8000 check
+    server app4 192.168.62.24:8000 check
+PS C:\Users\franc\projets\resultats-bf> vagrant provision lb1
+==> lb1: Running provisioner: commun (shell)...
+    lb1: Running: C:/Users/franc/AppData/Local/Temp/vagrant-shell20261028-12468-cpr72w.sh
+    lb1: [commun] lb1 : debut du provisionnement commun
+    lb1: Reading package lists...
+    lb1: Building dependency tree...
+    lb1: Reading state information...
+    lb1: python3-yaml is already the newest version (6.0.1-2build2).
+    lb1: 0 upgraded, 0 newly installed, 0 to remove and 246 not upgraded.
+    lb1: [commun] lb1 : termine
+==> lb1: Running provisioner: lb (shell)...
+    lb1: Running: C:/Users/franc/AppData/Local/Temp/vagrant-shell20261028-12468-4x19uc.sh
+    lb1: [lb] lb1 : debut
+    lb1: [lb] 2 serveur(s) applicatif(s) : app1, app2
+    lb1: Configuration file is valid
+    lb1: [lb] nouvelle configuration appliquee
+    lb1: [lb] lb1 : termine
+PS C:\Users\franc\projets\resultats-bf>
+
