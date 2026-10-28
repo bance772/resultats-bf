@@ -1,0 +1,8 @@
+# Tous les fichiers texte sont stockés et extraits en LF (format Linux),
+# quel que soit le système du membre de l'équipe (piège n°5 de l'énoncé).
+* text=auto eol=lf
+
+# Fichiers binaires : ne jamais les modifier.
+*.png binary
+*.jpg binary
+*.pdf binary

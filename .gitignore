@@ -1,0 +1,10 @@
+# Etat interne de Vagrant (identifiants des VM, clés SSH) : propre à chaque poste
+.vagrant/
+
+# Secrets reels : JAMAIS dans Git (exigence R7)
+.env
+
+# Fichier genere automatiquement par le Vagrantfile a chaque lancement
+config/noeuds.yml
+
+*.log
