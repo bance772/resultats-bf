@@ -1,0 +1,48 @@
+==========================================================================
+Scenario V6 - Panne du repartiteur (extension E1) - mesure du 01/11/2026
+Poste : BANCE F.X. (i5-4300U 2 coeurs, 8 Go, Windows) - VM lb1, lb2
+==========================================================================
+
+Commande (une seule ligne, timing automatique) :
+  Start-Process powershell -WorkingDirectory (Get-Location) -ArgumentList
+    '-NoExit -ExecutionPolicy Bypass -File tests\surveiller.ps1 -Duree 150
+     -Fichier mesures\V6-brut-halt-lb1.txt';
+  Start-Sleep -Seconds 5; Get-Date -Format "HH:mm:ss.fff";
+  vagrant halt lb1; Get-Date -Format "HH:mm:ss.fff"
+
+Adresse surveillee : http://192.168.62.10/repartiteur (IP virtuelle VRRP)
+Sortie brute       : mesures/V6-brut-halt-lb1.txt
+
+Resultats
+---------
+  Debut de 'vagrant halt lb1'        : 11:20:17.997
+  Premiere requete en echec          : 11:20:29.635
+  Premiere reponse de lb2            : 11:20:30.421
+  Fin de 'vagrant halt' (forcee)     : 11:21:31.476
+
+  Requetes envoyees    : 621
+  Requetes perdues     : 2
+  Disponibilite        : 99,68 %
+  Interruption mesuree : 1,00 s   (exigence : < 5 s)    -> CONFORME
+  Adresse du service   : inchangee (192.168.62.10)      -> CONFORME
+
+Analyse
+-------
+  - La bascule survient environ 11,6 s apres le debut du halt : lb1 a
+    commence un arret propre. En s'arretant, keepalived envoie une
+    derniere annonce VRRP de priorite 0 ; lb2 devient maitre aussitot,
+    sans attendre de constater l'absence de lb1. D'ou une coupure tres
+    courte (2 requetes perdues).
+  - La VM lb1 n'a pas termine son arret dans le delai de 60 s de Vagrant
+    et a ete coupee de force a 11:21:31, sans effet sur le service :
+    lb2 repondait deja.
+
+Limites et precision
+--------------------
+  - Precision de la mesure : environ +/- 0,5 s (une requete toutes les
+    ~0,25 s, delai maximal 0,5 s par requete). L'outil surestime
+    legerement l'interruption.
+  - Ce test couvre l'arret propre. Une panne brutale (coupure de courant)
+    ne permet pas l'annonce de priorite 0 : lb2 doit alors constater
+    l'absence d'annonces (environ 3 x advert_int, soit ~3 s attendues).
+    A mesurer separement.
