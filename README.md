@@ -173,9 +173,9 @@ resultats-bf/
 | Rôle | Membre | Périmètre |
 |---|---|---|
 | Architecte réseau et répartition | BANCE François Xavier | Vagrantfile, plan d'adressage, HAProxy, sonde de santé, extension E1 |
-| Ingénieur applicatif | *à compléter* | Service HTTP, absence d'état, gestion des erreurs de base |
-| Ingénieur données | *à compléter* | PostgreSQL, jeu de données, réplication, bascule |
-| Ingénieur essais et observabilité | *à compléter* | Scénarios V1 à V6, mesures, rédaction des résultats |
+| Ingénieur applicatif | DAMA Soumana | Service HTTP, absence d'état, gestion des erreurs de base |
+| Ingénieur données | PANANDETIGUI  Hawa | PostgreSQL, jeu de données, réplication, bascule |
+| Ingénieur essais et observabilité | DAMBRE  Brigitte | Scénarios V1 à V6, mesures, rédaction des résultats |
 
 ---
 
