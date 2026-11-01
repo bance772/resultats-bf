@@ -34,6 +34,9 @@ defaults
 # --- Point d'entree : seul port expose vers l'hote (8080 -> 80, R8) ----------
 frontend entree_web
     bind 0.0.0.0:80
+    # GET /repartiteur : renvoie le nom du repartiteur qui a repondu.
+    # Sert a observer la bascule lb1 -> lb2 (scenario V6), sans serveur applicatif.
+    http-request return status 200 content-type text/plain lf-string "%[hostname]" if { path /repartiteur }
     default_backend serveurs_app
 
 # --- Serveurs applicatifs -----------------------------------------------------
@@ -56,3 +59,5 @@ listen statistiques
     stats enable
     stats uri /stats
     stats refresh 2s
+    # Affiche le nom de la machine (lb1 ou lb2) en tete de page
+    stats show-node
