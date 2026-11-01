@@ -85,3 +85,4 @@ def resultat():
         "moyenne":   float(row[3]),
         "admis":     bool(row[4]),
     }), 200
+
