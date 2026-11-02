@@ -181,3 +181,4 @@ L'application détecte automatiquement que `bdd1` ne répond plus et bascule ses
 - **R1 (Reproductibilité) :** La destruction (`vagrant destroy -f bdd2`) puis recréation (`vagrant up bdd2`) doit réinitialiser la réplique sans accroc.
 - **R2 (Idempotence) :** Le test `if [ ! -f "${PGDATA}/standby.signal" ]` évite d'écraser la base si le script est rejoué.
 - **R6 (Secrets) :** Les mots de passe sont reçus par variables d'environnement (`REPLIC_MOT_DE_PASSE`), jamais écrits en dur.
+
