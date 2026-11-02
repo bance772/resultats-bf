@@ -157,6 +157,8 @@ vagrant ssh app1 -c "curl -s http://127.0.0.1:8000/info"
 
 Voici la trace réelle de l'exécution sur l'environnement de développement :
 
+![Capture d'écran des tests applicatifs](../mesures/test-app1-resultats.png)
+
 ```powershell
 PS C:\Users\user\Desktop\resultats-bf-dama> # Test 1 : La sonde de santé (doit afficher {"statut": "ok"} car la base répond !)
 >> vagrant ssh app1 -c "curl -s http://127.0.0.1:8000/sante"
